@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Casino</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>🎰 Casino</h1>
+    <p>Bienvenido, {{ usuario }}</p>
+    <a href="/logout"><button>Cerrar sesión</button></a>
+</header>
+
+<main class="contenedor">
+
+    <div class="card">
+        <h2>🎲 Dados</h2>
+        <button onclick="jugar('/dados')">Jugar</button>
+    </div>
+
+    <div class="card">
+        <h2>🃏 Cartas</h2>
+        <button onclick="jugar('/cartas')">Jugar</button>
+    </div>
+
+    <div class="card">
+        <h2>🎡 Ruleta</h2>
+        <button onclick="jugar('/ruleta')">Jugar</button>
+    </div>
+
+</main>
+
+<h2 id="resultado"></h2>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
