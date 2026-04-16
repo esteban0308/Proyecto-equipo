@@ -1,38 +1,76 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Casino</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+<meta charset="UTF-8">
+<title>Casino Pro</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
 </head>
+
 <body>
 
+<div class="layout">
+
+<aside class="sidebar">
+    <h2>🎰 Casino</h2>
+
+    <button onclick="mostrar('dados')">🎲 Dados</button>
+    <button onclick="mostrar('cartas')">🃏 Cartas</button>
+    <button onclick="mostrar('ruleta')">🎡 Ruleta</button>
+</aside>
+
+<div class="main">
+
 <header>
-    <h1>🎰 Casino</h1>
-    <p>Bienvenido, {{ usuario }}</p>
-    <a href="/logout"><button>Cerrar sesión</button></a>
+    <h1>Bienvenido, {{ usuario }}</h1>
+    <p>💰 $<span id="saldo">{{ saldo }}</span></p>
 </header>
 
-<main class="contenedor">
+<div class="contenido">
 
-    <div class="card">
-        <h2>🎲 Dados</h2>
-        <button onclick="jugar('/dados')">Jugar</button>
+<!-- 🎲 DADOS -->
+<div id="dados" class="juego">
+    <h2>Dados</h2>
+
+    <div class="dados">
+        <div id="dado1" class="dado">1</div>
+        <div id="dado2" class="dado">1</div>
     </div>
 
-    <div class="card">
-        <h2>🃏 Cartas</h2>
-        <button onclick="jugar('/cartas')">Jugar</button>
+    <input type="number" id="apuestaDados" placeholder="Apuesta">
+    <button onclick="apostarDados()">Jugar</button>
+</div>
+
+<!-- 🃏 CARTAS -->
+<div id="cartas" class="juego oculto">
+    <h2>Cartas</h2>
+    <div id="carta" class="carta">?</div>
+
+    <input type="number" id="apuestaCartas">
+    <button onclick="apostarCartas()">Jugar</button>
+</div>
+
+<!-- 🎡 RULETA -->
+<div id="ruleta" class="juego oculto">
+    <h2>Ruleta</h2>
+
+    <div class="ruleta-box">
+        <div class="puntero"></div>
+        <div id="ruletaAnim" class="ruleta"></div>
     </div>
 
-    <div class="card">
-        <h2>🎡 Ruleta</h2>
-        <button onclick="jugar('/ruleta')">Jugar</button>
-    </div>
+    <input type="number" id="apuestaRuleta">
+    <button onclick="apostarRuleta()">Girar</button>
+</div>
 
-</main>
+</div>
 
 <h2 id="resultado"></h2>
+
+<div id="historial"></div>
+
+</div>
+</div>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

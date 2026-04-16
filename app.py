@@ -1,54 +1,119 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import sqlite3
 import random
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
 
-# Ruta login
-@app.route("/", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        usuario = request.form["usuario"]
-        password = request.form["password"]
+# -------- BASE DE DATOS --------
+def get_db():
+    return sqlite3.connect("casino.db")
 
-        # Validación básica (puedes conectar con el login de tu amigo)
-        if usuario and password:
-            session["usuario"] = usuario
-            return redirect(url_for("juegos"))
+def crear_db():
+    con = get_db()
+    cursor = con.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT,
+            saldo INTEGER
+        )
+    """)
+    con.commit()
+    con.close()
 
-    return render_template("login.html")
+crear_db()
 
-# Ruta juegos (TU PARTE)
+# -------- INICIO --------
+@app.route("/")
+def inicio():
+    session["usuario"] = "Kevyn"
+
+    con = get_db()
+    cursor = con.cursor()
+
+    cursor.execute("SELECT saldo FROM usuarios WHERE nombre=?", (session["usuario"],))
+    user = cursor.fetchone()
+
+    if not user:
+        cursor.execute("INSERT INTO usuarios(nombre, saldo) VALUES (?,?)", (session["usuario"], 100))
+        con.commit()
+        saldo = 100
+    else:
+        saldo = user[0]
+
+    session["saldo"] = saldo
+    con.close()
+
+    return redirect(url_for("juegos"))
+
+# -------- JUEGOS --------
 @app.route("/juegos")
 def juegos():
-    if "usuario" not in session:
-        return redirect(url_for("login"))
+    return render_template("juegos.html",
+                           usuario=session["usuario"],
+                           saldo=session["saldo"])
 
-    return render_template("juegos.html", usuario=session["usuario"])
+# -------- APOSTAR --------
+@app.route("/apostar", methods=["POST"])
+def apostar():
+    data = request.json
+    juego = data["juego"]
+    apuesta = int(data["apuesta"])
 
-# Juegos backend
-@app.route("/dados")
-def dados():
-    d1 = random.randint(1,6)
-    d2 = random.randint(1,6)
-    return {"resultado": f"{d1} y {d2}"}
+    if apuesta <= 0:
+        return jsonify({"resultado": "Apuesta inválida", "saldo": session["saldo"]})
 
-@app.route("/cartas")
-def cartas():
-    cartas = ["A","K","Q","J","10","9"]
-    return {"resultado": random.choice(cartas)}
+    if apuesta > session["saldo"]:
+        return jsonify({"resultado": "Saldo insuficiente", "saldo": session["saldo"]})
 
-@app.route("/ruleta")
-def ruleta():
-    numero = random.randint(0,36)
-    color = "verde" if numero == 0 else ("rojo" if numero % 2 else "negro")
-    return {"resultado": f"{numero} - {color}"}
+    resultado = ""
+    ganancia = 0
 
-# Cerrar sesión
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
+    # 🎲 Dados
+    if juego == "dados":
+        d1 = random.randint(1,6)
+        d2 = random.randint(1,6)
+        if d1 + d2 > 7:
+            ganancia = apuesta
+            resultado = f"🎲 {d1} + {d2} → Ganaste"
+        else:
+            ganancia = -apuesta
+            resultado = f"🎲 {d1} + {d2} → Perdiste"
+
+    # 🃏 Cartas
+    elif juego == "cartas":
+        carta = random.choice(["A","K","Q","J","10","9"])
+        if carta in ["A","K"]:
+            ganancia = apuesta * 2
+            resultado = f"🃏 {carta} → Ganaste"
+        else:
+            ganancia = -apuesta
+            resultado = f"🃏 {carta} → Perdiste"
+
+    # 🎡 Ruleta
+    elif juego == "ruleta":
+        numero = random.randint(0,36)
+        if numero % 2 == 0:
+            ganancia = apuesta
+            resultado = f"🎡 {numero} → Ganaste"
+        else:
+            ganancia = -apuesta
+            resultado = f"🎡 {numero} → Perdiste"
+
+    session["saldo"] += ganancia
+
+    # guardar en DB
+    con = get_db()
+    cursor = con.cursor()
+    cursor.execute("UPDATE usuarios SET saldo=? WHERE nombre=?", (session["saldo"], session["usuario"]))
+    con.commit()
+    con.close()
+
+    return jsonify({
+        "resultado": resultado,
+        "saldo": session["saldo"]
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
