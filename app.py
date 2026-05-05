@@ -12,7 +12,7 @@ def login():
         email    = request.form.get('email')
         password = request.form.get('password')
 
-        return redirect('http://127.0.0.1:5000')
+        return redirect('http://127.0.0.1:5000S')
 
     return render_template('login.html')
 
@@ -24,8 +24,6 @@ def register():
         negocio  = request.form.get('negocio')
         password = request.form.get('password')
 
-        # Aquí guardas el usuario en users.db
-        # Por ahora redirige al login
         return redirect(url_for('login'))
 
     return render_template('register.html')
